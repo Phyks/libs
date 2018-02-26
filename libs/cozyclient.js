@@ -70,4 +70,33 @@ const getCozyClient = function (environment = 'production') {
   return cozyClient
 }
 
-module.exports = getCozyClient(process.env.NODE_ENV)
+class LazyClient {
+  setupClient() {
+    try {
+      this.client = getCozyClient(process.env.NODE_ENV)
+    } catch (e) {
+      throw new Error('Could not setup Cozy client. Are you sure that you passed correct COZY_URL and COZY_CREDENTIALS environment variables ?')
+    }
+  }
+  ensureClient () {
+    this.client || this.setupClient()
+  }
+  get data () {
+    this.ensureClient()
+    return this.client.data
+  }
+  get files () {
+    this.ensureClient()
+    return this.client.files
+  }
+  get jobs () {
+    this.ensureClient()
+    return this.client.jobs
+  }
+  get fetchJSON () {
+    this.ensureClient()
+    return this.client.fetchJSON.bind(this.client)
+  }
+}
+
+module.exports = new LazyClient()
